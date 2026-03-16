@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 // Replace this with your Firebase project config from Step 2 of the setup guide
@@ -15,5 +15,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
+setPersistence(auth, browserLocalPersistence)
 export const provider = new GoogleAuthProvider()
+provider.setCustomParameters({ prompt: 'select_account' })
 export const db = getFirestore(app)

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth'
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
 import { auth, provider } from './firebase'
 import Sidebar from './components/Sidebar'
 import CalendarPage from './components/CalendarPage'
@@ -24,15 +24,13 @@ export default function App() {
   const [page, setPage] = useState('calendar')
 
   useEffect(() => {
-    getRedirectResult(auth).catch(() => {})
     return onAuthStateChanged(auth, u => {
       setUser(u)
       setLoading(false)
     })
   }, [])
 
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-  const login = () => isMobile ? signInWithRedirect(auth, provider) : signInWithPopup(auth, provider)
+  const login = () => signInWithPopup(auth, provider)
   const logout = () => signOut(auth)
 
   if (loading) return (
