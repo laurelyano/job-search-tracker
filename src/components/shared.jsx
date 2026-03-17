@@ -129,7 +129,9 @@ export function DocUpload({ label, fileName, onFile, optional = true }) {
     setLoading(true)
     try {
       const text = await readFile(file)
-      onFile({ name: file.name, content: text })
+      const raw = await file.arrayBuffer()
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(raw)))
+      onFile({ name: file.name, content: text, type: file.type }, base64)
     } catch { alert('Could not read file. Please upload a valid .docx or .pdf file.') }
     setLoading(false)
     e.target.value = ''
