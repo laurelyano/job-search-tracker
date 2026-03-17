@@ -151,23 +151,9 @@ export function DocUpload({ label, fileName, onFile, optional = true }) {
 }
 
 export function DocViewer({ doc, onClose }) {
-  const exportPDF = () => {
-    const win = window.open('', '_blank')
-    win.document.write(`
-      <html><head><title>${doc.name}</title>
-      <style>body { font-family: Arial, sans-serif; font-size:13px; line-height:1.6; padding:40px; white-space:pre-wrap; }</style>
-      </head><body>${doc.content.replace(/\n/g,'<br/>')}</body></html>
-    `)
-    win.document.close()
-    win.focus()
-    setTimeout(() => { win.print(); win.close() }, 300)
-  }
   return (
     <Modal title={doc.name} onClose={onClose}>
       <pre style={{ whiteSpace:'pre-wrap', fontSize:13, lineHeight:1.7, fontFamily:'inherit', background:'#f8f8f8', borderRadius:7, padding:14, maxHeight:420, overflowY:'auto' }}>{doc.content}</pre>
-      <div style={{ display:'flex', justifyContent:'flex-end', marginTop:12 }}>
-        <Btn small variant="secondary" onClick={exportPDF}>Export as PDF</Btn>
-      </div>
     </Modal>
   )
 }

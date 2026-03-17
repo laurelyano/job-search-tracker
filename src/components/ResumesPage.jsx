@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useStore, Modal, Btn, Input, Tag, Empty, DocUpload } from './shared'
+import { useStore, Modal, Btn, Input, Tag, Empty, DocUpload, DocViewer } from './shared'
 
 export default function ResumesPage({ uid }) {
   const [resumes, setResumes, ready] = useStore(uid, 'resumes', [])
@@ -66,7 +66,6 @@ export default function ResumesPage({ uid }) {
               <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                 <Btn small variant="secondary" onClick={() => setViewing(r.file)}>View</Btn>
                 <Btn small variant="secondary" onClick={() => downloadOriginal(r)}>Download</Btn>
-                <Btn small variant="secondary" onClick={() => downloadPDF(r)}>Export PDF</Btn>
                 <Btn small variant="danger" onClick={() => del(r.id)}>Delete</Btn>
               </div>
           </div>
