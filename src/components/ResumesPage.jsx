@@ -1,19 +1,47 @@
 import { useState } from 'react'
-import { useStore, Modal, Btn, Input, Tag, Empty, DocUpload, DocViewer } from './shared'
+import { useStore, Modal, Btn, Input, Tag, Empty, DocUpload } from './shared'
 
 export default function ResumesPage({ uid }) {
   const [resumes, setResumes, ready] = useStore(uid, 'resumes', [])
   const [show, setShow] = useState(false)
   const [viewing, setViewing] = useState(null)
-  const [form, setForm] = useState({ label:'', date:'', notes:'', file:null })
+  const blank = { label:'', date:'', notes:'', file:null, rawFile:null }
+  const [form, setForm] = useState(blank)
 
   const add = () => {
-    if (!form.label || !form.file) return
+    if (!form.label) { alert('Please add a version label.'); return }
+    if (!form.file) { alert('Please upload a resume file.'); return }
     setResumes([{...form, id:Date.now()}, ...resumes])
-    setForm({ label:'', date:'', notes:'', file:null })
+    setForm(blank)
     setShow(false)
   }
   const del = (id) => setResumes(resumes.filter(r => r.id !== id))
+
+  const downloadOriginal = (r) => {
+    if (!r.rawFile) { alert('Original file not available. Please re-upload to enable download.'); return }
+    const bytes = Uint8Array.from(atob(r.rawFile), c => c.charCodeAt(0))
+    const blob = new Blob([bytes], { type: r.file.type || 'application/octet-stream' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = r.file.name; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const downloadPDF = (r) => {
+    if (!window.print) return
+    const win = window.open('', '_blank')
+    win.document.write(`
+      <html><head><title>${r.label}</title>
+      <style>
+        body { font-family: Arial, sans-serif; font-size: 13px; line-height: 1.6; padding: 40px; white-space: pre-wrap; }
+        @media print { body { padding: 0; } }
+      </style></head>
+      <body>${r.file.content.replace(/\n/g, '<br/>')}</body></html>
+    `)
+    win.document.close()
+    win.focus()
+    setTimeout(() => { win.print(); win.close() }, 300)
+  }
 
   if (!ready) return <div style={{color:'#ccc',fontSize:14}}>Loading...</div>
 
@@ -35,19 +63,21 @@ export default function ResumesPage({ uid }) {
               <div style={{ fontSize:12, color:'#999', marginTop:2 }}>{r.date||'No date'} — {r.file?.name}</div>
               {r.notes && <div style={{ fontSize:13, color:'#666', marginTop:4 }}>{r.notes}</div>}
             </div>
-            <div style={{ display:'flex', gap:8 }}>
-              <Btn small variant="secondary" onClick={() => setViewing(r.file)}>View</Btn>
-              <Btn small variant="danger" onClick={() => del(r.id)}>Delete</Btn>
-            </div>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                <Btn small variant="secondary" onClick={() => setViewing(r.file)}>View</Btn>
+                <Btn small variant="secondary" onClick={() => downloadOriginal(r)}>Download</Btn>
+                <Btn small variant="secondary" onClick={() => downloadPDF(r)}>Export PDF</Btn>
+                <Btn small variant="danger" onClick={() => del(r.id)}>Delete</Btn>
+              </div>
           </div>
         ))}
       </div>
       {show && (
-        <Modal title="Add Resume Version" onClose={() => setShow(false)}>
+        <Modal title="Add Resume Version" onClose={() => { setForm(blank); setShow(false) }}>
           <Input label="Version Label *" value={form.label} onChange={v => setForm({...form,label:v})} placeholder="e.g. PM Resume v3" />
           <Input label="Date" type="date" value={form.date} onChange={v => setForm({...form,date:v})} />
           <Input label="What changed?" value={form.notes} onChange={v => setForm({...form,notes:v})} placeholder="e.g. Rewrote summary, added new project" />
-          <DocUpload label="Resume" optional={false} fileName={form.file?.name} onFile={f => setForm({...form,file:f})} />
+          <DocUpload label="Resume *" optional={false} fileName={form.file?.name} onFile={(f, raw) => setForm({...form, file:f, rawFile:raw})} />
           <div style={{ display:'flex', gap:8, justifyContent:'flex-end', marginTop:4 }}>
             <Btn variant="secondary" onClick={() => setShow(false)}>Cancel</Btn>
             <Btn onClick={add}>Save</Btn>
