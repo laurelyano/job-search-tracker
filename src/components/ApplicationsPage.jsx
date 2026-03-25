@@ -9,7 +9,7 @@ export default function ApplicationsPage({ uid }) {
   const [editing, setEditing] = useState(null)
   const [filter, setFilter] = useState('All')
   const [viewDoc, setViewDoc] = useState(null)
-  const blank = { company:'', role:'', dateApplied:'', stage:'Applied', contact:'', rejectionReason:'', lessons:'', notes:'', url:'', resume:null, coverLetter:null }
+  const blank = { company:'', role:'', dateApplied:'', stage:'Applied', contact:'', rejectionReason:'', lessons:'', notes:'', url:'', resume:null, resumeRaw:null, coverLetter:null, coverLetterRaw:null }
   const [form, setForm] = useState(blank)
 
   const save = () => {
@@ -22,6 +22,16 @@ export default function ApplicationsPage({ uid }) {
   const del = (id) => setApps(apps.filter(a => a.id !== id))
   const counts = STAGES.reduce((acc,s) => ({...acc,[s]:apps.filter(a=>a.stage===s).length}), {})
   const filtered = filter==='All' ? apps : apps.filter(a => a.stage===filter)
+
+  const downloadFile = (file, raw) => {
+    if (!raw) { alert('Original file not available. Please re-upload to enable download.'); return }
+    const bytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0))
+    const blob = new Blob([bytes], { type: file.type || 'application/octet-stream' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = file.name; a.click()
+    URL.revokeObjectURL(url)
+  }
 
   if (!ready) return <div style={{color:'#ccc',fontSize:14}}>Loading...</div>
 
@@ -51,7 +61,9 @@ export default function ApplicationsPage({ uid }) {
                 {(a.resume||a.coverLetter) && (
                   <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
                     {a.resume && <Btn small variant="secondary" onClick={() => setViewDoc(a.resume)}>View Resume</Btn>}
+                    {a.resume && <Btn small variant="secondary" onClick={() => downloadFile(a.resume, a.resumeRaw)}>Download Resume</Btn>}
                     {a.coverLetter && <Btn small variant="secondary" onClick={() => setViewDoc(a.coverLetter)}>View Cover Letter</Btn>}
+                    {a.coverLetter && <Btn small variant="secondary" onClick={() => downloadFile(a.coverLetter, a.coverLetterRaw)}>Download Cover Letter</Btn>}
                   </div>
                 )}
                 {a.stage==='Rejected'&&a.rejectionReason && (
@@ -78,8 +90,8 @@ export default function ApplicationsPage({ uid }) {
           <Input label="Job URL" value={form.url} onChange={v => setForm({...form,url:v})} placeholder="https://..." />
           <Input label="Point of Contact (optional)" value={form.contact} onChange={v => setForm({...form,contact:v})} placeholder="e.g. Jane Smith — Recruiter" />
           <Sel label="Stage" value={form.stage} onChange={v => setForm({...form,stage:v})} options={STAGES} />
-          <DocUpload label="Resume" fileName={form.resume?.name} onFile={f => setForm({...form,resume:f})} />
-          <DocUpload label="Cover Letter" fileName={form.coverLetter?.name} onFile={f => setForm({...form,coverLetter:f})} />
+          <DocUpload label="Resume" fileName={form.resume?.name} onFile={(f, raw) => setForm({...form, resume:f, resumeRaw:raw})} />
+          <DocUpload label="Cover Letter" fileName={form.coverLetter?.name} onFile={(f, raw) => setForm({...form, coverLetter:f, coverLetterRaw:raw})} />
           {form.stage==='Rejected' && <>
             <Input label="Rejection Reason" value={form.rejectionReason} onChange={v => setForm({...form,rejectionReason:v})} placeholder="e.g. Lack of experience in X" multiline rows={2} />
             <Input label="Lessons Learned" value={form.lessons} onChange={v => setForm({...form,lessons:v})} placeholder="What would you do differently?" multiline rows={2} />
